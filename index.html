@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nik-parser LZ</title>
+    
+    <script src="nik-parser.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0000;
+            font-family: 'Courier New', 'Monaco', monospace;
+            min-height: 100vh;
+            padding: 20px;
+            color: #ff4444;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-bottom: 2px solid #ff0000;
+        }
+        
+        .title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff0000;
+            margin-bottom: 10px;
+        }
+        
+        .brand {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff0000;
+            letter-spacing: 2px;
+        }
+        
+        .header-video {
+            margin-top: 20px;
+            max-width: 100%;
+            width: 400px;
+            border: 2px solid #ff0000;
+            border-radius: 4px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .video-hint {
+            margin-top: 8px;
+            font-size: 11px;
+            color: #8b0000;
+            font-style: italic;
+        }
+        
+        .card {
+            background: #000000;
+            border: 2px solid #ff0000;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .label {
+            color: #ff4444;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #000000;
+            color: #ff0000;
+            border: 2px solid #ff0000;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 18px;
+            text-align: center;
+            outline: none;
+        }
+        
+        input:focus {
+            border-color: #ff4444;
+            box-shadow: 0 0 10px rgba(255,0,0,0.3);
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background: #8b0000;
+            color: #ffffff;
+            border: 2px solid #ff0000;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #ff0000;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .sample-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .sample-buttons button {
+            flex: 1;
+            padding: 8px;
+            font-size: 12px;
+            margin-top: 0;
+            background: #000000;
+            color: #ff4444;
+            border: 1px solid #ff0000;
+        }
+        
+        .sample-buttons button:hover {
+            background: #3a0000;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .result-title {
+            color: #ff4444;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .char-count {
+            color: #8b0000;
+            font-size: 12px;
+        }
+        
+        #resultContainer {
+            background: #000000;
+            color: #ff0000;
+            padding: 15px;
+            border-radius: 4px;
+            border: 2px solid #ff0000;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .info-panel {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #8b0000;
+            font-size: 12px;
+            color: #8b0000;
+            text-align: center;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            border-top: 2px solid #ff0000;
+            color: #ff0000;
+            font-size: 12px;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 13px;
+            z-index: 9999;
+            background: #000000;
+            border: 2px solid #ff0000;
+            color: #ff0000;
+        }
+        
+        .toast.error {
+            border-color: #ff0000;
+            color: #ff4444;
+        }
+        
+        pre {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="title">TWT</div>
+        <div class="brand">LZ-NIK</div>
+        <video id="headerVideo" class="header-video" autoplay loop playsinline controls>
+            <source src="https://files.catbox.moe/ra2obp.mp4" type="video/mp4">
+            Browser kamu tidak mendukung video.
+        </video>
+        <div class="video-hint" id="videoHint">🔊 Klik video jika suara tidak keluar</div>
+    </div>
+    
+    <div class="card">
+        <label class="label">MASUKKAN NIK (16 DIGIT):</label>
+        <input type="text" id="nikInput" placeholder="3171010101900001" maxlength="16">
+        
+        <button onclick="parseNIK()">PARSE NIK</button>
+        
+        <div class="sample-buttons">
+            <button onclick="setContoh('3171010101900001')">PRIA (JKT)</button>
+            <button onclick="setContoh('3174026505930002')">WANITA (JKT)</button>
+            <button onclick="setContoh('1271018204970001')">MEDAN</button>
+            <button onclick="setContoh('3273011505950001')">BANDUNG</button>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="result-header">
+            <span class="result-title">HASIL PARSE:</span>
+            <span class="char-count" id="charCount">0 characters</span>
+        </div>
+        <div id="resultContainer">SISTEM SIAP
+
+Masukkan NIK 16 digit dan klik PARSE NIK.</div>
+        
+        <button id="copyBtn" onclick="copyToClipboard()">SALIN KE CLIPBOARD</button>
+    </div>
+    
+    <div class="info-panel">
+        <p>FORMAT: PPKKSSDDMMYYXXXX</p>
+        <p>PP=PROVINSI, KK=KAB/KOTA, SS=KECAMATAN</p>
+        <p>TANGGAL LAHIR &gt;40 = PEREMPUAN (OTOMATIS TERKOREKSI)</p>
+    </div>
+    
+    <div class="footer">
+        nik-parser LZ | Menggunakan nik-parser.js
+    </div>
+</div>
+
+<script>
+let dbReady = false;
+
+// ============================================================
+// VIDEO AUTOPLAY WITH SOUND HANDLER
+// ============================================================
+const headerVideo = document.getElementById('headerVideo');
+const videoHint = document.getElementById('videoHint');
+
+// Coba autoplay dengan suara
+const autoplayPromise = headerVideo.play();
+
+if (autoplayPromise !== undefined) {
+    autoplayPromise.then(() => {
+        // Autoplay dengan suara berhasil
+        videoHint.style.display = 'none';
+    }).catch(error => {
+        // Browser memblokir autoplay dengan suara
+        // Fallback: coba autoplay tanpa suara dulu, lalu user bisa nyalakan suara manual
+        console.log('Autoplay dengan suara diblokir browser. Mencoba mute...');
+        headerVideo.muted = true;
+        headerVideo.play().then(() => {
+            videoHint.innerHTML = '🔇 Browser memblokir suara otomatis. Klik video untuk mengaktifkan suara.';
+            videoHint.style.color = '#ff4444';
+        }).catch(err => {
+            console.log('Autoplay gagal total:', err);
+            videoHint.innerHTML = '▶️ Klik video untuk memutar dengan suara';
+            videoHint.style.color = '#ff4444';
+        });
+    });
+}
+
+// Event saat user klik video - nyalakan suara
+headerVideo.addEventListener('click', function() {
+    if (headerVideo.muted) {
+        headerVideo.muted = false;
+        videoHint.innerHTML = '🔊 Suara aktif';
+        videoHint.style.color = '#8b0000';
+        setTimeout(() => {
+            videoHint.style.display = 'none';
+        }, 2000);
+    }
+});
+
+// ============================================================
+// NIK PARSER FUNCTIONS
+// ============================================================
+function checkLibrary() {
+    if (typeof nikParse !== 'undefined') {
+        dbReady = true;
+        document.getElementById('resultContainer').innerHTML = 'SISTEM SIAP\n\nDatabase dari nik-parser.js berhasil dimuat.\nMasukkan NIK 16 digit dan klik PARSE NIK.';
+        showToast('Database berhasil dimuat', false);
+    } else {
+        document.getElementById('resultContainer').innerHTML = 'ERROR: nik-parser.js tidak ditemukan!\n\nPastikan file nik-parser.js ada di folder yang sama.';
+        showToast('nik-parser.js tidak ditemukan', true);
+    }
+}
+
+function showToast(message, isError) {
+    const oldToast = document.querySelector('.toast');
+    if (oldToast) oldToast.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast' + (isError ? ' error' : '');
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function updateCharCount() {
+    const resultText = document.getElementById('resultContainer').innerText;
+    const charCount = resultText.length;
+    const charCountSpan = document.getElementById('charCount');
+    charCountSpan.innerHTML = `${charCount} characters`;
+    
+    if (charCount > 50 && !resultText.includes('ERROR') && !resultText.includes('SIAP')) {
+        charCountSpan.style.color = '#ff0000';
+        document.getElementById('copyBtn').disabled = false;
+    } else {
+        charCountSpan.style.color = '#8b0000';
+        document.getElementById('copyBtn').disabled = true;
+    }
+}
+
+function parseNIK() {
+    const nik = document.getElementById('nikInput').value.trim();
+    const resultContainer = document.getElementById('resultContainer');
+    
+    if (!nik) {
+        resultContainer.innerText = 'ERROR: Masukkan NIK terlebih dahulu!';
+        showToast('NIK tidak boleh kosong', true);
+        updateCharCount();
+        return;
+    }
+    
+    if (nik.length !== 16) {
+        resultContainer.innerText = `ERROR: NIK harus 16 digit! (${nik.length} digit)`;
+        showToast('NIK harus 16 digit', true);
+        updateCharCount();
+        return;
+    }
+    
+    if (!/^\d+$/.test(nik)) {
+        resultContainer.innerText = 'ERROR: NIK hanya boleh berisi angka!';
+        showToast('NIK hanya boleh angka', true);
+        updateCharCount();
+        return;
+    }
+    
+    if (!dbReady) {
+        resultContainer.innerText = 'Menunggu library siap...';
+        return;
+    }
+    
+    resultContainer.innerText = 'Memproses NIK...';
+    
+    nikParse(nik, function(result) {
+        const resultText = JSON.stringify(result, null, 2);
+        resultContainer.innerText = resultText;
+        showToast('NIK berhasil diparse', false);
+        updateCharCount();
+    });
+}
+
+function copyToClipboard() {
+    const resultText = document.getElementById('resultContainer').innerText;
+    const copyBtn = document.getElementById('copyBtn');
+    
+    if (!resultText || resultText === '' || resultText.includes('ERROR') || resultText.includes('SIAP') || resultText.includes('Memproses')) {
+        showToast('Tidak ada data valid untuk disalin', true);
+        return;
+    }
+    
+    const originalText = copyBtn.innerHTML;
+    copyBtn.innerHTML = 'MENYALIN...';
+    copyBtn.disabled = true;
+    
+    const textarea = document.createElement('textarea');
+    textarea.value = resultText;
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-9999px';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    
+    textarea.select();
+    textarea.setSelectionRange(0, resultText.length);
+    
+    try {
+        const success = document.execCommand('copy');
+        if (success) {
+            showToast(`${resultText.length} karakter berhasil disalin`, false);
+            copyBtn.innerHTML = 'BERHASIL DISALIN!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.disabled = false;
+            }, 1500);
+        } else {
+            throw new Error('execCommand failed');
+        }
+    } catch (err) {
+        navigator.clipboard.writeText(resultText).then(() => {
+            showToast(`${resultText.length} karakter berhasil disalin`, false);
+            copyBtn.innerHTML = 'BERHASIL DISALIN!';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.disabled = false;
+            }, 1500);
+        }).catch(() => {
+            showToast('Gagal menyalin! Copy manual dengan Ctrl+C', true);
+            copyBtn.innerHTML = originalText;
+            copyBtn.disabled = false;
+        });
+    } finally {
+        document.body.removeChild(textarea);
+    }
+}
+
+function setContoh(nik) {
+    document.getElementById('nikInput').value = nik;
+    parseNIK();
+}
+
+document.getElementById('nikInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') parseNIK();
+});
+
+setTimeout(checkLibrary, 100);
+</script>
+
+</body>
+</html>
